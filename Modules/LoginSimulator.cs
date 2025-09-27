@@ -171,6 +171,7 @@ namespace SQLInjectionSimulator.Modules
                 return new LoginResult
                 {
                     Success = success,
+                    IsSuccessful = success,
                     Message = message,
                     ResponseTime = stopwatch.ElapsedMilliseconds,
                     QueryExecuted = queryExecuted
@@ -187,6 +188,7 @@ namespace SQLInjectionSimulator.Modules
                 return new LoginResult
                 {
                     Success = false,
+                    IsSuccessful = false,
                     Message = $"Error: {ex.Message}",
                     ResponseTime = stopwatch.ElapsedMilliseconds,
                     QueryExecuted = attempt.QueryExecuted ?? ""
@@ -251,6 +253,7 @@ namespace SQLInjectionSimulator.Modules
                 Username = username,
                 InputPayload = username,
                 PasswordInput = password,
+                Password = password,
                 AttemptTime = DateTime.Now,
                 IpAddress = GenerateNormalIP(),
                 UserAgent = _userAgents[_random.Next(3)], // Use normal browsers
@@ -268,6 +271,7 @@ namespace SQLInjectionSimulator.Modules
                 Username = inUsername ? payload : "admin",
                 InputPayload = inUsername ? payload : "admin",
                 PasswordInput = inUsername ? "password" : payload,
+                Password = inUsername ? "password" : payload,
                 AttemptTime = DateTime.Now,
                 IpAddress = GenerateSuspiciousIP(),
                 UserAgent = _userAgents[_random.Next(3, _userAgents.Count)], // Use suspicious tools
@@ -314,6 +318,85 @@ namespace SQLInjectionSimulator.Modules
         {
             return _random.NextDouble() > 0.7 ? GenerateSuspiciousIP() : GenerateNormalIP();
         }
+
+        /// <summary>
+        /// Simulate realistic user behavior patterns for educational analysis
+        /// </summary>
+        public async Task SimulateUserBehaviorAsync(int duration = 300)
+        {
+            Console.WriteLine($"\n🎭 SIMULATING USER BEHAVIOR");
+            Console.WriteLine("==============================");
+            Console.WriteLine($"Duration: {duration} seconds");
+            Console.WriteLine("Generating realistic mix of normal and suspicious activity...\n");
+
+            var startTime = DateTime.Now;
+            var endTime = startTime.AddSeconds(duration);
+            int attemptCount = 0;
+
+            while (DateTime.Now < endTime)
+            {
+                try
+                {
+                    attemptCount++;
+                    
+                    // Determine behavior pattern (80% normal, 15% suspicious, 5% attack)
+                    var behaviorType = _random.NextDouble() switch
+                    {
+                        < 0.80 => "normal",
+                        < 0.95 => "suspicious", 
+                        _ => "attack"
+                    };
+
+                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Attempt #{attemptCount} - {behaviorType.ToUpper()}");
+
+                    switch (behaviorType)
+                    {
+                        case "normal":
+                            var normalAttempts = await GenerateNormalAttemptsAsync(1);
+                            foreach (var attempt in normalAttempts)
+                            {
+                                var result = await ExecuteLoginAttemptAsync(attempt);
+                                Console.WriteLine($"   👤 Normal user: {attempt.Username} -> {(result.IsSuccessful ? "✅" : "❌")}");
+                            }
+                            await Task.Delay(_random.Next(5000, 15000)); // Normal users take time
+                            break;
+
+                        case "suspicious":
+                            // Multiple rapid attempts from same IP
+                            var targetUser = new[] { "admin", "root", "administrator" }[_random.Next(3)];
+                            var bruteAttempts = await GenerateBruteForceAttemptsAsync(targetUser, 3);
+                            
+                            foreach (var attempt in bruteAttempts)
+                            {
+                                var result = await ExecuteLoginAttemptAsync(attempt);
+                                Console.WriteLine($"   🔍 Brute force: {attempt.Username}/{attempt.PasswordInput.Substring(0, Math.Min(8, attempt.PasswordInput.Length))} -> ❌");
+                                await Task.Delay(_random.Next(100, 500)); // Rapid attempts
+                            }
+                            break;
+
+                        case "attack":
+                            var injectionAttempts = await GenerateInjectionAttemptsAsync(1);
+                            foreach (var attempt in injectionAttempts)
+                            {
+                                var result = await ExecuteLoginAttemptAsync(attempt, true); // Use vulnerable method
+                                Console.WriteLine($"   🚨 SQL Injection: {attempt.Username.Substring(0, Math.Min(15, attempt.Username.Length))}... -> {(result.IsSuccessful ? "💀" : "🛡️")}");
+                            }
+                            await Task.Delay(_random.Next(1000, 3000));
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"   ⚠️  Error in simulation: {ex.Message}");
+                }
+            }
+
+            var totalTime = DateTime.Now - startTime;
+            Console.WriteLine($"\n📊 SIMULATION COMPLETE");
+            Console.WriteLine($"   ⏱️  Duration: {totalTime.TotalSeconds:F1} seconds");
+            Console.WriteLine($"   🔢 Total Attempts: {attemptCount}");
+            Console.WriteLine($"   📈 Average Rate: {attemptCount / totalTime.TotalMinutes:F1} attempts/minute");
+        }
     }
 
     /// <summary>
@@ -324,6 +407,7 @@ namespace SQLInjectionSimulator.Modules
         public string Username { get; set; } = string.Empty;
         public string InputPayload { get; set; } = string.Empty;
         public string PasswordInput { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
         public DateTime AttemptTime { get; set; }
         public bool IsSuccessful { get; set; }
         public bool IsInjection { get; set; }
@@ -339,6 +423,7 @@ namespace SQLInjectionSimulator.Modules
     public class LoginResult
     {
         public bool Success { get; set; }
+        public bool IsSuccessful { get; set; }
         public string Message { get; set; } = string.Empty;
         public long ResponseTime { get; set; }
         public string QueryExecuted { get; set; } = string.Empty;

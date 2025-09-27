@@ -66,7 +66,7 @@ namespace SQLInjectionSimulator.Modules
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
 
-            string query = "SELECT Id, Username, IsActive FROM Users ORDER BY Username";
+            string query = "SELECT UserId, Username, IsActive, LastLoginDate FROM Users ORDER BY Username";
 
             using var command = new SqlCommand(query, connection);
             using var reader = await command.ExecuteReaderAsync();
@@ -77,7 +77,8 @@ namespace SQLInjectionSimulator.Modules
                 {
                     UserId = reader.GetInt32(0),
                     Username = reader.GetString(1),
-                    IsActive = reader.GetBoolean(2)
+                    IsActive = reader.GetBoolean(2),
+                    LastLoginDate = reader.IsDBNull(3) ? null : reader.GetDateTime(3)
                 });
             }
 
@@ -120,5 +121,6 @@ namespace SQLInjectionSimulator.Modules
         public int UserId { get; set; }
         public string Username { get; set; } = string.Empty;
         public bool IsActive { get; set; }
+        public DateTime? LastLoginDate { get; set; }
     }
 }
