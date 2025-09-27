@@ -292,6 +292,93 @@ namespace SQLInjectionSimulator.Modules
         }
 
         /// <summary>
+        /// Show detailed query execution analysis for educational purposes
+        /// </summary>
+        public void ShowQueryExecution(string query, string description = "")
+        {
+            Console.WriteLine("\n🔍 DETAILED QUERY ANALYSIS");
+            Console.WriteLine("============================");
+            
+            if (!string.IsNullOrEmpty(description))
+            {
+                Console.WriteLine($"📝 Description: {description}");
+                Console.WriteLine();
+            }
+            
+            Console.WriteLine($"🔤 Query: {query}");
+            Console.WriteLine();
+            
+            // Analyze query structure
+            Console.WriteLine("📊 Query Analysis:");
+            Console.WriteLine($"   • Length: {query.Length} characters");
+            Console.WriteLine($"   • Contains quotes: {(query.Contains("'") ? "Yes" : "No")}");
+            Console.WriteLine($"   • Contains comments: {(query.Contains("--") || query.Contains("/*") ? "Yes" : "No")}");
+            Console.WriteLine($"   • Contains semicolons: {(query.Contains(";") ? "Yes" : "No")}");
+            Console.WriteLine($"   • SQL Keywords: {CountSqlKeywords(query)}");
+            
+            // Check for injection patterns
+            var injectionRisk = AnalyzeInjectionRisk(query);
+            Console.WriteLine($"   🚨 Injection Risk: {injectionRisk}");
+            
+            // Show security implications
+            ShowSecurityImplications(query);
+            
+            Console.WriteLine(new string('-', 60));
+        }
+
+        private int CountSqlKeywords(string query)
+        {
+            var keywords = new[] { "SELECT", "FROM", "WHERE", "AND", "OR", "UNION", "INSERT", "UPDATE", "DELETE", "DROP" };
+            return keywords.Count(keyword => query.ToUpper().Contains(keyword));
+        }
+
+        private string AnalyzeInjectionRisk(string query)
+        {
+            if (IsPotentialInjectionAttempt(query))
+            {
+                return "🔴 HIGH - Injection patterns detected";
+            }
+            else if (query.Contains("'"))
+            {
+                return "🟡 MEDIUM - Contains quotes but no clear injection pattern";
+            }
+            else
+            {
+                return "🟢 LOW - No obvious injection indicators";
+            }
+        }
+
+        private void ShowSecurityImplications(string query)
+        {
+            Console.WriteLine("\n🛡️  Security Analysis:");
+            
+            if (query.Contains("'") && !query.Contains("@"))
+            {
+                Console.WriteLine("   ⚠️  String concatenation detected - vulnerable to injection");
+            }
+            if (query.Contains("@"))
+            {
+                Console.WriteLine("   ✅ Parameterized query detected - protected against injection");
+            }
+            if (query.Contains("--"))
+            {
+                Console.WriteLine("   🚨 SQL comment detected - potential comment injection");
+            }
+            if (query.ToUpper().Contains("DROP") || query.ToUpper().Contains("DELETE"))
+            {
+                Console.WriteLine("   💀 Destructive operation detected - extremely dangerous");
+            }
+            if (query.ToUpper().Contains("UNION"))
+            {
+                Console.WriteLine("   🔍 Union operation detected - potential data extraction");
+            }
+            if (query.ToUpper().Contains("WAITFOR"))
+            {
+                Console.WriteLine("   ⏰ Time delay detected - potential timing attack");
+            }
+        }
+
+        /// <summary>
         /// Check if input contains potential SQL injection patterns
         /// </summary>
         private bool IsPotentialInjectionAttempt(string input)
