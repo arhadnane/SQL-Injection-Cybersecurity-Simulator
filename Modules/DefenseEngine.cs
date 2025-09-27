@@ -316,11 +316,11 @@ namespace SQLInjectionSimulator.Modules
 
             if (attemptReader.Read())
             {
-                metrics.TotalAttempts = attemptReader.GetInt32("TotalAttempts");
-                metrics.SuccessfulAttempts = attemptReader.GetInt32("SuccessfulAttempts");
-                metrics.InjectionAttempts = attemptReader.GetInt32("InjectionAttempts");
-                metrics.UniqueIPs = attemptReader.GetInt32("UniqueIPs");
-                metrics.UniqueUsers = attemptReader.GetInt32("UniqueUsers");
+                metrics.TotalAttempts = attemptReader.GetInt32(0);
+                metrics.SuccessfulAttempts = attemptReader.GetInt32(1);
+                metrics.InjectionAttempts = attemptReader.GetInt32(2);
+                metrics.UniqueIPs = attemptReader.GetInt32(3);
+                metrics.UniqueUsers = attemptReader.GetInt32(4);
             }
             attemptReader.Close();
 
@@ -340,11 +340,11 @@ namespace SQLInjectionSimulator.Modules
 
             if (alertReader.Read())
             {
-                metrics.TotalAlerts = alertReader.GetInt32("TotalAlerts");
-                metrics.CriticalAlerts = alertReader.GetInt32("CriticalAlerts");
-                metrics.HighAlerts = alertReader.GetInt32("HighAlerts");
-                metrics.MediumAlerts = alertReader.GetInt32("MediumAlerts");
-                metrics.LowAlerts = alertReader.GetInt32("LowAlerts");
+                metrics.TotalAlerts = alertReader.GetInt32(0);
+                metrics.CriticalAlerts = alertReader.GetInt32(1);
+                metrics.HighAlerts = alertReader.GetInt32(2);
+                metrics.MediumAlerts = alertReader.GetInt32(3);
+                metrics.LowAlerts = alertReader.GetInt32(4);
             }
 
             // Calculate derived metrics

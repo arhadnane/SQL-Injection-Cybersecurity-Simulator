@@ -56,13 +56,11 @@ namespace SQLInjectionSimulator.Modules
                     string query = @"INSERT INTO Users (Username, PasswordHash, CreatedDate, IsActive) 
                                    VALUES (@username, @passwordHash, @createdDate, @isActive)";
 
-                    using var command = new SqlCommand(query, connection);
-                    command.Parameters.AddWithValue("@username", username);
-                    command.Parameters.AddWithValue("@passwordHash", passwordHash);
-                    command.Parameters.AddWithValue("@createdDate", DateTime.Now);
-                    command.Parameters.AddWithValue("@isActive", true);
-
-                    await command.ExecuteNonQueryAsync();
+                using var command = new SqlCommand(query, connection);
+                command.Parameters.Add("@username", System.Data.SqlDbType.NVarChar, 50).Value = username;
+                command.Parameters.Add("@passwordHash", System.Data.SqlDbType.NVarChar, 255).Value = passwordHash;
+                command.Parameters.Add("@createdDate", System.Data.SqlDbType.DateTime).Value = DateTime.Now;
+                command.Parameters.Add("@isActive", System.Data.SqlDbType.Bit).Value = true;                    await command.ExecuteNonQueryAsync();
                     Console.WriteLine($"✅ Created user: {username}");
                 }
                 catch (Exception ex)
@@ -126,10 +124,10 @@ namespace SQLInjectionSimulator.Modules
             if (!reader.Read())
                 return (false, "Invalid credentials", null);
 
-            int userId = reader.GetInt32("UserId");
-            string storedHash = reader.GetString("PasswordHash");
-            bool isActive = reader.GetBoolean("IsActive");
-            int failedCount = reader.GetInt32("FailedLoginCount");
+            int userId = reader.GetInt32(0); // UserId
+            string storedHash = reader.GetString(1); // PasswordHash  
+            bool isActive = reader.GetBoolean(2); // IsActive
+            int failedCount = reader.GetInt32(3); // FailedLoginCount
 
             if (!isActive)
                 return (false, "Account is disabled", null);
@@ -203,12 +201,12 @@ namespace SQLInjectionSimulator.Modules
 
             return new UserInfo
             {
-                UserId = reader.GetInt32("UserId"),
-                Username = reader.GetString("Username"),
-                CreatedDate = reader.GetDateTime("CreatedDate"),
-                IsActive = reader.GetBoolean("IsActive"),
-                LastLoginDate = reader.IsDBNull("LastLoginDate") ? null : reader.GetDateTime("LastLoginDate"),
-                FailedLoginCount = reader.GetInt32("FailedLoginCount")
+                UserId = reader.GetInt32(0), // UserId
+                Username = reader.GetString(1), // Username
+                CreatedDate = reader.GetDateTime(2), // CreatedDate
+                IsActive = reader.GetBoolean(3), // IsActive
+                LastLoginDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4), // LastLoginDate
+                FailedLoginCount = reader.GetInt32(5) // FailedLoginCount
             };
         }
 
@@ -233,12 +231,12 @@ namespace SQLInjectionSimulator.Modules
             {
                 users.Add(new UserInfo
                 {
-                    UserId = reader.GetInt32("UserId"),
-                    Username = reader.GetString("Username"),
-                    CreatedDate = reader.GetDateTime("CreatedDate"),
-                    IsActive = reader.GetBoolean("IsActive"),
-                    LastLoginDate = reader.IsDBNull("LastLoginDate") ? null : reader.GetDateTime("LastLoginDate"),
-                    FailedLoginCount = reader.GetInt32("FailedLoginCount")
+                    UserId = reader.GetInt32(0), // UserId
+                    Username = reader.GetString(1), // Username
+                    CreatedDate = reader.GetDateTime(2), // CreatedDate
+                    IsActive = reader.GetBoolean(3), // IsActive
+                    LastLoginDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4), // LastLoginDate
+                    FailedLoginCount = reader.GetInt32(5) // FailedLoginCount
                 });
             }
 
@@ -249,9 +247,9 @@ namespace SQLInjectionSimulator.Modules
         {
             string query = "SELECT COUNT(*) FROM Users WHERE Username = @username";
             using var command = new SqlCommand(query, connection);
-            command.Parameters.AddWithValue("@username", username);
+            command.Parameters.Add("@username", System.Data.SqlDbType.NVarChar, 50).Value = username;
 
-            int count = (int)await command.ExecuteScalarAsync();
+            int count = (int)(await command.ExecuteScalarAsync() ?? 0);
             return count > 0;
         }
 
